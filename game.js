@@ -444,27 +444,35 @@ function initMobileControls() {
     }
     // 터치 이벤트
     pad.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!e.touches[0]) return;
         const dirs = getDirectionFromPoint(e.touches[0].clientX, e.touches[0].clientY);
         currentDir = dirs;
         activateDirection(dirs);
-    });
+    }, { passive: false });
     pad.addEventListener('touchmove', e => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!e.touches[0]) return;
         const dirs = getDirectionFromPoint(e.touches[0].clientX, e.touches[0].clientY);
         if (JSON.stringify(dirs) !== JSON.stringify(currentDir)) {
             currentDir = dirs;
             activateDirection(dirs);
         }
-    });
+    }, { passive: false });
     pad.addEventListener('touchend', e => {
+        e.preventDefault();
+        e.stopPropagation();
         currentDir = null;
         activateDirection(null);
-    });
+    }, { passive: false });
     pad.addEventListener('touchcancel', e => {
+        e.preventDefault();
+        e.stopPropagation();
         currentDir = null;
         activateDirection(null);
-    });
+    }, { passive: false });
     // 마우스 이벤트(PC)
     let mouseDown = false;
     pad.addEventListener('mousedown', e => {

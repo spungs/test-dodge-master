@@ -9,8 +9,8 @@ body {
     font-family: sans-serif;
     padding-top: 20px;
     box-sizing: border-box;
-    /* overflow-x: hidden; */
-    /* overflow-y: hidden; */
+    touch-action: none;
+    overflow: hidden;
 }
 
 /* 반응형 디자인 */
