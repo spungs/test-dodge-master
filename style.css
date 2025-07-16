@@ -1,0 +1,806 @@
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+    font-family: sans-serif;
+    padding-top: 20px;
+    box-sizing: border-box;
+    /* overflow-x: hidden; */
+    /* overflow-y: hidden; */
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    body {
+        padding-top: 10px;
+    }
+    #header h1 {
+        font-size: 2em;
+    }
+    .game-container {
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+    canvas {
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+        aspect-ratio: 6/5;
+    }
+    #ranking-container {
+        width: 100%;
+        max-width: 400px;
+    }
+    .modal-content {
+        width: 90%;
+        max-width: 350px;
+        margin: 10% auto;
+        padding: 20px;
+    }
+    .modal-content h2 {
+        font-size: 1.5em;
+    }
+}
+
+/* 모바일 컨트롤 스타일 */
+.mobile-controls {
+    display: block;
+    margin-top: 20px;
+    user-select: none;
+    touch-action: manipulation;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+.control-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 5px 0;
+}
+
+/* 개선된 FPS 스타일 조이스틱 컨테이너 */
+.joystick-container {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0.2) 100%);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+/* 개선된 조이스틱 스틱 */
+.joystick-stick {
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle, #4a90e2 0%, #357abd 50%, #2c5aa0 100%);
+    border-radius: 50%;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 조이스틱 내부 링 표시 */
+.joystick-rings {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.joystick-ring {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.joystick-ring.ring-1 {
+    width: 60%;
+    height: 60%;
+}
+
+.joystick-ring.ring-2 {
+    width: 80%;
+    height: 80%;
+}
+
+/* 방향 표시 개선 */
+.joystick-direction {
+    position: absolute;
+    font-size: 16px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.6);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.joystick-direction.up { top: 10px; }
+.joystick-direction.down { bottom: 10px; }
+.joystick-direction.left { left: 10px; }
+.joystick-direction.right { right: 10px; }
+
+/* 조이스틱 활성화 상태 */
+.joystick-container:active,
+.joystick-container.pressed {
+    background: radial-gradient(circle, rgba(74, 144, 226, 0.3) 0%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0.2) 100%);
+    transform: scale(0.95);
+    border-color: rgba(74, 144, 226, 0.5);
+}
+
+.joystick-container:active .joystick-stick,
+.joystick-container.pressed .joystick-stick {
+    background: radial-gradient(circle, #5ba0f0 0%, #4a90e2 50%, #357abd 100%);
+    transform: scale(1.05);
+    box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* 방향별 시각적 피드백 */
+.joystick-container.up .joystick-direction.up,
+.joystick-container.down .joystick-direction.down,
+.joystick-container.left .joystick-direction.left,
+.joystick-container.right .joystick-direction.right {
+    opacity: 1;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* 대각선 방향 표시 */
+.joystick-container.up-left .joystick-direction.up,
+.joystick-container.up-left .joystick-direction.left,
+.joystick-container.up-right .joystick-direction.up,
+.joystick-container.up-right .joystick-direction.right,
+.joystick-container.down-left .joystick-direction.down,
+.joystick-container.down-left .joystick-direction.left,
+.joystick-container.down-right .joystick-direction.down,
+.joystick-container.down-right .joystick-direction.right {
+    opacity: 1;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* 대각선 방향 스틱 위치 */
+.joystick-container.up-left .joystick-stick { 
+    top: 15px; 
+    left: 15px; 
+}
+.joystick-container.up-right .joystick-stick { 
+    top: 15px; 
+    right: 15px; 
+}
+.joystick-container.down-left .joystick-stick { 
+    bottom: 15px; 
+    left: 15px; 
+}
+.joystick-container.down-right .joystick-stick { 
+    bottom: 15px; 
+    right: 15px; 
+}
+
+/* 압력 표시 (스틱 이동 거리에 따른 시각적 피드백) */
+.joystick-pressure {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(74, 144, 226, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.joystick-container.pressed .joystick-pressure {
+    opacity: 1;
+}
+
+/* 4방향 원형 버튼 컨트롤 */
+.directional-pad {
+    width: 140px;
+    height: 140px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+.dir-btn {
+    width: 48px;
+    height: 48px;
+    background: radial-gradient(circle, #4a90e2 0%, #357abd 80%, #2c5aa0 100%);
+    border: 3px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    margin: 0;
+    padding: 0;
+    outline: none;
+    cursor: pointer;
+    opacity: 0.95;
+    transition: background 0.15s, box-shadow 0.15s;
+    position: relative;
+    z-index: 1;
+}
+.dir-btn:active, .dir-btn.pressed {
+    background: radial-gradient(circle, #5ba0f0 0%, #4a90e2 80%, #357abd 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.dir-btn.up {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+.dir-btn.down {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+.dir-btn.left {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+.dir-btn.right {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+.dir-center {
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+    margin: 0 8px;
+    display: inline-block;
+}
+.dir-middle-row {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    position: relative;
+    height: 48px;
+}
+@media (max-width: 768px) {
+    .directional-pad {
+        width: 100px;
+        height: 100px;
+    }
+    .dir-btn {
+        width: 34px;
+        height: 34px;
+    }
+    .dir-center {
+        width: 30px;
+        height: 30px;
+    }
+    .dir-middle-row {
+        height: 34px;
+    }
+}
+
+/* 모바일에서만 컨트롤 표시 */
+@media (max-width: 768px) {
+    #retry-btn {
+        display: inline-block;
+    }
+    
+    /* 모바일에서 조이스틱 크기 조정 */
+    .joystick-container {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .joystick-stick {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+/* 데스크톱에서는 컨트롤 숨김 및 중앙정렬, scale(0.9) */
+@media (min-width: 769px) {
+    body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .game-container {
+        margin: 0;
+        transform: scale(0.9);
+        transform-origin: top center;
+    }
+}
+
+#header {
+    text-align: center;
+    margin-bottom: 10px;
+    margin-top: 100px;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* margin-bottom: 10px; */
+}
+
+#gameTitle {
+    margin: 0;
+    color: #333;
+    font-size: 2.5em;
+}
+
+#languageToggle {
+    padding: 8px 16px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+#languageToggle:hover {
+    background-color: #2980b9;
+}
+
+#challenge-message {
+    font-size: 1.2em;
+    color: #e74c3c;
+    font-weight: bold;
+    padding: 10px;
+    background-color: #fff;
+    border: 2px solid #e74c3c;
+    border-radius: 5px;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.game-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+#timer-box {
+    /* position: relative; */
+    left: 140px;
+    top: -30px;
+    padding: 8px 16px;
+    font-size: 1.1em;
+    font-weight: bold;
+    z-index: 10;
+    pointer-events: none;
+    text-align: center;
+    white-space: nowrap;
+    min-width: 120px;
+    width: 120px;
+    box-sizing: border-box;
+    display: inline-block;
+    margin-bottom: -20px; /* 아래쪽 여백 보정 */
+}
+
+.game-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+#giveup-btn {
+    padding: 10px 20px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#giveup-btn:hover {
+    background-color: #c0392b;
+}
+
+#retry-btn {
+    padding: 10px 20px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 10px;
+}
+
+#retry-btn:hover {
+    background-color: #c0392b;
+}
+
+/* 모달 스타일 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    padding: 32px 24px 24px 24px;
+    width: 400px;
+    max-width: 95vw;
+    margin: 6vh auto 0 auto;
+    animation: modalSlideIn 0.2s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+    z-index: 1001;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 90%;
+        max-width: 350px;
+        margin: 4vh auto 0 auto;
+        padding: 20px;
+    }
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-content h2 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 2em;
+}
+
+.modal-content p {
+    margin: 15px 0;
+    font-size: 1.1em;
+    color: #555;
+}
+
+#finalTime {
+    font-weight: bold;
+    color: #e74c3c;
+    font-size: 1.2em;
+}
+
+#playerNameInput {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+#playerNameInput:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
+}
+
+/* 국가 선택 컨테이너 */
+.country-select-container {
+    margin: 15px 0;
+}
+
+.country-select-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+.select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+#countrySelect {
+    width: 100%;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    background: white;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+#countrySelect option {
+    padding: 8px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+#countrySelect option:hover {
+    background-color: #f5f5f5;
+}
+
+#countrySelect option:checked {
+    background-color: #4a90e2;
+    color: white;
+}
+
+/* 모바일에서 국가 선택 최적화 */
+@media (max-width: 768px) {
+    #countrySelect {
+        max-height: 150px;
+    }
+    
+    #countrySearchInput {
+        font-size: 16px; /* 모바일에서 자동 확대 방지 */
+    }
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.modal-buttons button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#saveRankingBtn {
+    background-color: #27ae60;
+    color: white;
+}
+
+#saveRankingBtn:hover {
+    background-color: #229954;
+}
+
+#closeModalBtn {
+    background-color: #95a5a6;
+    color: white;
+}
+
+#closeModalBtn:hover {
+    background-color: #7f8c8d;
+}
+
+/* 신기록 스타일 */
+.new-record {
+    color: #e74c3c !important;
+    font-weight: bold;
+    font-size: 1.3em;
+}
+
+.encouragement {
+    color: #f39c12;
+    font-style: italic;
+}
+
+canvas {
+    border: 2px solid #333;
+    background-color: #fff;
+}
+
+#ranking-container {
+    width: 200px;
+    padding: 10px;
+    border: 2px solid #333;
+    background-color: #fff;
+}
+
+#ranking-container .ranking-search-row {
+  display: flex;
+  gap: 2%;
+  margin-bottom: 8px;
+}
+#ranking-search {
+  width: 70%;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  font-size: 1em;
+}
+#ranking-search-btn {
+  width: 28%;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  font-size: 1em;
+}
+
+h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 2px;
+}
+
+#ranking-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#ranking-list li {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 0.85em;
+}
+
+#ranking-list li:last-child {
+    border-bottom: none;
+}
+
+/* 토글 스위치 스타일 */
+.toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 10px;
+  user-select: none;
+}
+.toggle-switch input[type="checkbox"] {
+  display: none;
+}
+.toggle-switch .slider {
+  width: 40px;
+  height: 22px;
+  background: #ccc;
+  border-radius: 22px;
+  position: relative;
+  transition: background 0.2s;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.toggle-switch .slider:before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.toggle-switch input[type="checkbox"]:checked + .slider {
+  background: #3498db;
+}
+.toggle-switch input[type="checkbox"]:checked + .slider:before {
+  transform: translateX(18px);
+}
+.toggle-switch .toggle-label {
+  font-size: 1em;
+  color: #333;
+  min-width: 70px;
+}
+.dir-btn span {
+    display: block;
+    font-size: 2em;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* 4등분 원형 패드 */
+.circle-pad {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: #222;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.pad-area {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+}
+/* 8방향 pad-area 위치 및 스타일 */
+.pad-up { top: 0; left: 25%; width: 50%; height: 25%; border-top-left-radius: 70px; border-top-right-radius: 70px; background: rgba(80,160,255,0.12); border-bottom: 2px solid #444; }
+.pad-down { bottom: 0; left: 25%; width: 50%; height: 25%; border-bottom-left-radius: 70px; border-bottom-right-radius: 70px; background: rgba(80,160,255,0.12); border-top: 2px solid #444; }
+.pad-left { left: 0; top: 25%; width: 25%; height: 50%; border-top-left-radius: 70px; border-bottom-left-radius: 70px; background: rgba(80,160,255,0.12); border-right: 2px solid #444; }
+.pad-right { right: 0; top: 25%; width: 25%; height: 50%; border-top-right-radius: 70px; border-bottom-right-radius: 70px; background: rgba(80,160,255,0.12); border-left: 2px solid #444; }
+.pad-area span {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    pointer-events: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+.pad-up { top: 0; left: 25%; width: 50%; height: 25%; border-top-left-radius: 70px; border-top-right-radius: 70px; background: rgba(80,160,255,0.12); border-bottom: 2px solid #444; }
+.pad-down { bottom: 0; left: 25%; width: 50%; height: 25%; border-bottom-left-radius: 70px; border-bottom-right-radius: 70px; background: rgba(80,160,255,0.12); border-top: 2px solid #444; }
+.pad-left { left: 0; top: 25%; width: 25%; height: 50%; border-top-left-radius: 70px; border-bottom-left-radius: 70px; background: rgba(80,160,255,0.12); border-right: 2px solid #444; }
+.pad-right { right: 0; top: 25%; width: 25%; height: 50%; border-top-right-radius: 70px; border-bottom-right-radius: 70px; background: rgba(80,160,255,0.12); border-left: 2px solid #444; }
+.pad-area:active, .pad-area.pressed { background: rgba(80,160,255,0.25) !important; }
+.pad-center {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 40px; height: 40px;
+    background: #333;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+@media (max-width: 768px) {
+    .circle-pad { width: 100px; height: 100px; }
+    .pad-center { width: 28px; height: 28px; }
+    .pad-area span { font-size: 1.3em; }
+    .pad-up, .pad-down { border-top-left-radius: 50px; border-top-right-radius: 50px; border-bottom-left-radius: 50px; border-bottom-right-radius: 50px; }
+    .pad-left, .pad-right { border-top-left-radius: 50px; border-top-right-radius: 50px; border-bottom-left-radius: 50px; border-bottom-right-radius: 50px; }
+}
